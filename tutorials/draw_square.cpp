@@ -4,7 +4,7 @@
 #include <std_srvs/srv/empty.hpp>
 #include <math.h>
 
-shipsim::msg::Pose::SharedPtr g_pose;
+shipsim::msg::Pose g_pose;
 shipsim::msg::Pose g_goal;
 
 enum State
@@ -18,22 +18,27 @@ enum State
 State g_state = FORWARD;
 State g_last_state = FORWARD;
 bool g_first_goal_set = false;
+bool g_first_pose_set = false;
 
 #define PI 3.141592
 
-void poseCallback(const shipsim::msg::Pose::SharedPtr pose)
+void poseCallback(const shipsim::msg::Pose &pose)
 {
   g_pose = pose;
+  if (!g_first_pose_set)
+  {
+    g_first_pose_set = true;
+  }
 }
 
 bool hasReachedGoal()
 {
-  return fabsf(g_pose->x - g_goal.x) < 0.1 && fabsf(g_pose->y - g_goal.y) < 0.1 && fabsf(g_pose->theta - g_goal.theta) < 0.01;
+  return fabsf(g_pose.x - g_goal.x) < 0.1 && fabsf(g_pose.y - g_goal.y) < 0.1 && fabsf(g_pose.theta - g_goal.theta) < 0.01;
 }
 
 bool hasStopped()
 {
-  return g_pose->angular_velocity < 0.0001 && g_pose->linear_velocity < 0.0001;
+  return g_pose.angular_velocity < 0.0001 && g_pose.linear_velocity < 0.0001;
 }
 
 void printGoal()
@@ -55,9 +60,9 @@ void stopForward(rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr twist_p
   {
     RCLCPP_INFO(rclcpp::get_logger("draw_square"), "Reached goal");
     g_state = TURN;
-    g_goal.x = g_pose->x;
-    g_goal.y = g_pose->y;
-    g_goal.theta = fmod(g_pose->theta + static_cast<float>(PI) / 2.0f, 2.0f * static_cast<float>(PI));
+    g_goal.x = g_pose.x;
+    g_goal.y = g_pose.y;
+    g_goal.theta = fmod(g_pose.theta + static_cast<float>(PI) / 2.0f, 2.0f * static_cast<float>(PI));
     // wrap g_goal.theta to [-pi, pi)
     if (g_goal.theta >= static_cast<float>(PI))
       g_goal.theta -= 2.0f * static_cast<float>(PI);
@@ -75,9 +80,9 @@ void stopTurn(rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr twist_pub)
   {
     RCLCPP_INFO(rclcpp::get_logger("draw_square"), "Reached goal");
     g_state = FORWARD;
-    g_goal.x = cos(g_pose->theta) * 2 + g_pose->x;
-    g_goal.y = sin(g_pose->theta) * 2 + g_pose->y;
-    g_goal.theta = g_pose->theta;
+    g_goal.x = cos(g_pose.theta) * 2 + g_pose.x;
+    g_goal.y = sin(g_pose.theta) * 2 + g_pose.y;
+    g_goal.theta = g_pose.theta;
     printGoal();
   }
   else
@@ -114,7 +119,7 @@ void turn(rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr twist_pub)
 
 void timerCallback(rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr twist_pub)
 {
-  if (!g_pose)
+  if (g_first_goal_set)
   {
     return;
   }
@@ -123,9 +128,9 @@ void timerCallback(rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr twist
   {
     g_first_goal_set = true;
     g_state = FORWARD;
-    g_goal.x = cos(g_pose->theta) * 2 + g_pose->x;
-    g_goal.y = sin(g_pose->theta) * 2 + g_pose->y;
-    g_goal.theta = g_pose->theta;
+    g_goal.x = cos(g_pose.theta) * 2 + g_pose.x;
+    g_goal.y = sin(g_pose.theta) * 2 + g_pose.y;
+    g_goal.theta = g_pose.theta;
     printGoal();
   }
 
@@ -154,7 +159,8 @@ int main(int argc, char **argv)
   auto pose_sub = nh->create_subscription<shipsim::msg::Pose>("ship1/pose", 1, std::bind(poseCallback, std::placeholders::_1));
   auto twist_pub = nh->create_publisher<geometry_msgs::msg::Twist>("ship1/cmd_vel", 1);
   auto reset = nh->create_client<std_srvs::srv::Empty>("reset");
-  auto timer = nh->create_wall_timer(std::chrono::milliseconds(16), [twist_pub]() { timerCallback(twist_pub); });
+  auto timer = nh->create_wall_timer(std::chrono::milliseconds(16), [twist_pub]()
+                                     { timerCallback(twist_pub); });
 
   auto empty = std::make_shared<std_srvs::srv::Empty::Request>();
   reset->async_send_request(empty);
