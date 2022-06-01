@@ -15,7 +15,7 @@ namespace shipsim
   ShipFrame::ShipFrame(rclcpp::Node::SharedPtr &node_handle, QWidget *parent, Qt::WindowFlags f)
       : QFrame(parent, f), path_image_(2400, 1350, QImage::Format_ARGB32), path_painter_(&path_image_), frame_count_(0), id_counter_(0)
   {
-    setFixedSize(1600, 900);
+    setFixedSize(1200, 600);
     setWindowTitle("ShipSim");
 
     srand(time(NULL));
@@ -45,7 +45,7 @@ namespace shipsim
     nh_->declare_parameter("background_b", rclcpp::ParameterValue(DEFAULT_BG_B), background_b_descriptor);
 
     QVector<QString> ships;
-    ships.append("ship_small.png");//small or big
+    ships.append("ship_small.png"); // small or big
 
     QString images_path = (ament_index_cpp::get_package_share_directory("shipsim") + "/images/").c_str();
     for (int i = 0; i < ships.size(); ++i)
