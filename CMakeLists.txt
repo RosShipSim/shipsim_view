@@ -48,17 +48,23 @@ qt5_wrap_cpp(shipsim_node_MOCS ${shipsim_node_HDRS})
 add_executable(shipsim_node ${shipsim_node_SRCS} ${shipsim_node_MOCS})
 target_link_libraries(shipsim_node Qt5::Widgets)
 ament_target_dependencies(shipsim_node ${dependencies})
-rosidl_target_interfaces(shipsim_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
+rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
+target_link_libraries(shipsim_node "${cpp_typesupport_target}")
 
 add_executable(ship_teleop_key tutorials/teleop_ship_key.cpp)
 ament_target_dependencies(ship_teleop_key ${dependencies})
-rosidl_target_interfaces(ship_teleop_key ${PROJECT_NAME} "rosidl_typesupport_cpp")
+rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
+target_link_libraries(ship_teleop_key "${cpp_typesupport_target}")
+
 add_executable(draw_square tutorials/draw_square.cpp)
 ament_target_dependencies(draw_square ${dependencies})
-rosidl_target_interfaces(draw_square ${PROJECT_NAME} "rosidl_typesupport_cpp")
+rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
+target_link_libraries(draw_square "${cpp_typesupport_target}")
+
 add_executable(mimic tutorials/mimic.cpp)
 ament_target_dependencies(mimic ${dependencies})
-rosidl_target_interfaces(mimic ${PROJECT_NAME} "rosidl_typesupport_cpp")
+rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
+target_link_libraries(mimic "${cpp_typesupport_target}")
 
 install(TARGETS shipsim_node ship_teleop_key draw_square mimic
   DESTINATION lib/${PROJECT_NAME})
